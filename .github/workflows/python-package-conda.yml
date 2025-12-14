@@ -1,0 +1,58 @@
+name: SystemCalc CI/CD
+
+# Запуск при будь-якому push у репозиторій
+on:
+  push:
+    branches: [ "main", "master" ]
+
+# Надання прав для створення релізів
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Завантаження коду репозиторію
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Вивід інформації про автора (Вимога лаби)
+      - name: Print Author Info
+        run: |
+          echo "--------------------------------------"
+          echo "Author: Poliatsko Oleksandr"
+          echo "Group: KV-33"
+          echo "Lab: 06 - CI/CD Implementation"
+          echo "--------------------------------------"
+
+      # 3. Налаштування Python
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      # 4. Встановлення залежностей
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          # Встановлюємо залежності, якщо є requirements.txt, інакше просто tkinter (стандартний)
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # 5. Автоматичне збирання додатку (Вимога: build)
+      # Використовуємо main.py, який було зазначено в Лаб №5
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller --onefile --name SystemCalc main.py
+
+      # 6. Публікація реліза (Вимога: release)
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Release v1.0.${{ github.run_number }}
+          files: dist/SystemCalc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
